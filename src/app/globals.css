@@ -1,0 +1,370 @@
+/**
+ * Sovereign Reserve Agent - Global Styles
+ * Tailwind CSS Base Configuration with Custom Utilities
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TAILWIND BASE LAYERS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CSS CUSTOM PROPERTIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Base Colors */
+  --color-background: #000000;
+  --color-foreground: #ffffff;
+  --color-muted: #6b7280;
+  --color-border: #1f2937;
+  
+  /* Persona Accent Colors */
+  --color-ironclad: #3b82f6;
+  --color-ironclad-glow: rgba(59, 130, 246, 0.3);
+  
+  --color-surfer: #10b981;
+  --color-surfer-glow: rgba(16, 185, 129, 0.3);
+  
+  --color-hawk: #ef4444;
+  --color-hawk-glow: rgba(239, 68, 68, 0.3);
+  
+  /* Token Colors */
+  --color-usdt: #26a17b;
+  --color-xaut: #fbbf24;
+  
+  /* Animation Durations */
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  
+  /* Fonts */
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-mono), 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BASE LAYER OVERRIDES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-black text-white font-sans;
+    background-attachment: fixed;
+  }
+
+  /* Improved Focus States */
+  :focus-visible {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2 ring-offset-black;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-900;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-700 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-600;
+  }
+
+  /* Firefox Scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #374151 #111827;
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-blue-500/30 text-white;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPONENT LAYER
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer components {
+  /* Card Component */
+  .card {
+    @apply bg-gray-900/80 border border-gray-800 rounded-xl;
+    @apply backdrop-blur-sm;
+  }
+
+  .card-hover {
+    @apply card transition-all duration-300;
+    @apply hover:border-gray-700 hover:bg-gray-900;
+  }
+
+  /* Button Styles */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2;
+    @apply px-4 py-2 rounded-lg font-medium;
+    @apply transition-all duration-200;
+    @apply focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black;
+  }
+
+  .btn-primary {
+    @apply btn bg-blue-600 text-white;
+    @apply hover:bg-blue-500 active:bg-blue-700;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-gray-400;
+    @apply hover:text-white hover:bg-gray-800;
+  }
+
+  /* Terminal Styles */
+  .terminal {
+    @apply font-mono text-sm;
+    @apply bg-gray-950 text-gray-300;
+    @apply border border-gray-800 rounded-xl;
+  }
+
+  .terminal-header {
+    @apply flex items-center gap-2 px-4 py-2;
+    @apply bg-gray-900 border-b border-gray-800;
+    @apply rounded-t-xl;
+  }
+
+  .terminal-body {
+    @apply p-4 overflow-y-auto;
+  }
+
+  /* Badge Styles */
+  .badge {
+    @apply inline-flex items-center gap-1;
+    @apply px-2 py-0.5 rounded text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply badge bg-emerald-500/20 text-emerald-400;
+  }
+
+  .badge-warning {
+    @apply badge bg-yellow-500/20 text-yellow-400;
+  }
+
+  .badge-error {
+    @apply badge bg-red-500/20 text-red-400;
+  }
+
+  /* Persona Glow Effects */
+  .glow-ironclad {
+    box-shadow: 0 0 30px var(--color-ironclad-glow),
+                0 0 60px var(--color-ironclad-glow);
+  }
+
+  .glow-surfer {
+    box-shadow: 0 0 30px var(--color-surfer-glow),
+                0 0 60px var(--color-surfer-glow);
+  }
+
+  .glow-hawk {
+    box-shadow: 0 0 30px var(--color-hawk-glow),
+                0 0 60px var(--color-hawk-glow);
+  }
+
+  /* Status Indicator */
+  .status-dot {
+    @apply w-2 h-2 rounded-full;
+  }
+
+  .status-dot-active {
+    @apply status-dot bg-emerald-400;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .status-dot-warning {
+    @apply status-dot bg-yellow-400;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  .status-dot-error {
+    @apply status-dot bg-red-400;
+    animation: pulse 1s ease-in-out infinite;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITY LAYER
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer utilities {
+  /* Text Gradient */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r;
+  }
+
+  .text-gradient-blue {
+    @apply text-gradient from-blue-400 to-blue-600;
+  }
+
+  .text-gradient-emerald {
+    @apply text-gradient from-emerald-400 to-emerald-600;
+  }
+
+  .text-gradient-gold {
+    @apply text-gradient from-yellow-400 to-amber-500;
+  }
+
+  /* Glassmorphism */
+  .glass {
+    @apply bg-gray-900/50 backdrop-blur-lg;
+    @apply border border-gray-800/50;
+  }
+
+  /* Gradient Borders */
+  .border-gradient {
+    position: relative;
+    background-clip: padding-box;
+  }
+
+  .border-gradient::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, #3b82f6, #10b981);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
+  /* Animation Utilities */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  /* Hide Scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Safe Area Insets for Mobile */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   KEYFRAME ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.6);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes glitch {
+  0% {
+    transform: translate(0);
+    filter: hue-rotate(0deg);
+  }
+  10% {
+    transform: translate(-2px, 1px);
+    filter: hue-rotate(90deg);
+  }
+  20% {
+    transform: translate(2px, -1px);
+    filter: hue-rotate(180deg);
+  }
+  30% {
+    transform: translate(-1px, 2px);
+    filter: hue-rotate(270deg);
+  }
+  40% {
+    transform: translate(1px, -2px);
+    filter: hue-rotate(360deg);
+  }
+  50% {
+    transform: translate(0);
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    transform: translate(0);
+    filter: hue-rotate(0deg);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRINT STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media print {
+  body {
+    @apply bg-white text-black;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
