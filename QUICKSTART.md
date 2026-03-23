@@ -221,11 +221,6 @@ npm run wdk:full-dev             # Run both Next.js + WDK together
 - **Operations**: Deposit, borrow, withdraw, repay
 - **Collateral**: Real-time health factors
 
-### 5. x402 Payments
-- **Standard**: HTTP 402 open protocol
-- **Auth**: EIP-3009 signatures
-- **Cost**: ~$0.001 on Plasma/Stable
-
 ---
 
 ## Testing First Swap
@@ -367,7 +362,7 @@ npm run wdk:service:dev
 |-----------|---------------|----------|----------|
 | Swap | ~$0.001 | ~$10-50 | ~$0.10-0.50 |
 | Bridge | ~$0.001 | ~$3-10 | ~$0.50-2 |
-| x402 Pay | ~$0.001 | ~$0.5-2 | ~$0.01 |
+
 
 **Recommendation**: Use **Plasma or Stable** for development (near-zero fees)
 
@@ -395,7 +390,6 @@ npm run wdk:service:dev
 | **Tether WDK Docs** | https://docs.wdk.tether.io/ |
 | **WDK GitHub** | https://github.com/tetherto/wdk-core |
 | **Agent Skills** | https://docs.wdk.tether.io/ai/agent-skills |
-| **x402 Protocol** | https://www.x402.org/ |
 
 ---
 
