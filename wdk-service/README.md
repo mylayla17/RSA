@@ -124,9 +124,6 @@ ETH_RPC=https://eth.drpc.org
 PLASMA_RPC=https://rpc.plasma.to
 STABLE_RPC=https://rpc.stable.xyz
 
-# x402 payment settings
-X402_FACILITATOR_URL=https://x402.semanticpay.io/
-```
 
 ### Step 3: Configure Next.js to Use the Service
 
@@ -268,13 +265,6 @@ const depositResult = await wdkClient.lend('deposit', tokenAddress, amount);
 - Borrow stablecoins against collateral
 - Real-time interest rates and health factors
 
-### 5. x402 Payment Protocol
-
-- HTTP 402 payment standard
-- Sign payments with WDK wallet
-- Automatic payment authorization (EIP-3009)
-- No account setup required
-
 ## Security Considerations
 
 ### Seed Phrase Protection
@@ -315,7 +305,6 @@ All write operations require explicit user confirmation in the dashboard before 
 - Swaps
 - Bridges
 - Lending operations
-- x402 payments
 
 ## API Endpoints Reference
 
@@ -371,14 +360,6 @@ Body: { token: string, amount: string }
 Returns: { success, transactionHash?, error? }
 ```
 
-### x402 Payments
-
-```
-POST /payment/x402
-Body: { resourceUrl: string }
-Returns: { success, data?, paymentReceipt?, error? }
-```
-
 ### Cleanup
 
 ```
@@ -422,16 +403,6 @@ curl http://localhost:3001/balance?token=0x...
 
 # Bridge more funds if needed
 # Use the /bridge endpoint to transfer USDT0
-```
-
-### x402 Facilitator Unreachable
-
-```bash
-# Default is Semantic facilitator (third-party, supported but not by Tether)
-# For self-hosted x402 facilitator, see wdk-service/src/index.ts
-
-# Check facilitator status
-curl https://x402.semanticpay.io/health
 ```
 
 ### Keys Not Wiped on Shutdown
