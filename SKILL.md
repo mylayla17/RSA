@@ -88,7 +88,7 @@ This guide explains the architecture, component responsibilities, and how to ext
 │  - Swap operations (Velora DEX)                            │
 │  - Cross-chain bridge (Everscale Bridge)                   │
 │  - Lending/Borrowing (Aave V3)                             │
-│  - x402 payment protocol                                    │
+│                                                           │
 └──────────────────────────────────────────────────────────────┘
                  │
                  ↓
@@ -243,7 +243,6 @@ if (!this.isDemoMode) {
 - Execute swaps via Velora DEX
 - Bridge USDT across chains
 - Manage Aave V3 lending/borrowing
-- Implement x402 payment protocol
 - Cleanup keys on shutdown
 
 **Key functions**:
@@ -251,7 +250,6 @@ if (!this.isDemoMode) {
 - `executeSwap(request)` - DEX swap execution
 - `bridgeUsdt(request)` - Cross-chain bridge
 - `lendOrBorrow(action, token, amount)` - Aave operations
-- `makeX402Payment(resourceUrl)` - Payment protocol
 - `cleanup()` - Security cleanup
 
 **Critical patterns**:
@@ -693,7 +691,6 @@ WDK_SERVICE_PORT=3001
 - **CoinGecko API**: https://www.coingecko.com/en/api
 - **Aave V3**: https://aave.com/
 - **Velora DEX**: https://velora.io/
-- **x402 Protocol**: https://x402.org/
 
 ---
 
