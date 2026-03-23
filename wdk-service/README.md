@@ -42,7 +42,6 @@ This separation exists because WDK native modules cannot run in Next.js serverle
 │  - Swaps (Velora DEX)           │
 │  - Bridges (USDT0)              │
 │  - Lending (Aave V3)            │
-│  - x402 Payments                │
 └─────────────────────────────────┘
          │
          │ Blockchain calls
@@ -96,12 +95,11 @@ npm install
 ```
 
 This installs:
-- `@tetherto/wdk-core` - Core wallet management
+- `@tetherto/wdk` - Core wallet management
 - `@tetherto/wdk-wallet-evm` - EVM blockchain wallet support
 - `@tetherto/wdk-protocol-swap-velora-evm` - DEX swaps via Velora
 - `@tetherto/wdk-protocol-bridge-usdt0-evm` - USDT0 cross-chain bridge
-- `@tetherto/wdk-protocol-aave-v3-evm` - Lending/borrowing via Aave V3
-- `@x402/fetch`, `@x402/evm`, `@x402/core` - x402 payment protocol
+- `@tetherto/wdk-protocol-lending-aave-evm` - Lending/borrowing via Aave V3
 - `express` - HTTP API server
 
 ### Step 2: Configure Environment Variables

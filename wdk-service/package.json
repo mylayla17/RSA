@@ -17,18 +17,15 @@
     "blockchain",
     "defi",
     "wallet",
-    "x402",
-    "payment-protocol"
+    "velora",
+    "swap"
   ],
   "dependencies": {
-    "@tetherto/wdk-core": "^1.0.0",
-    "@tetherto/wdk-wallet-evm": "^1.0.0",
-    "@tetherto/wdk-protocol-swap-velora-evm": "^1.0.0",
-    "@tetherto/wdk-protocol-bridge-usdt0-evm": "^1.0.0",
-    "@tetherto/wdk-protocol-aave-v3-evm": "^1.0.0",
-    "@x402/fetch": "^1.0.0",
-    "@x402/evm": "^1.0.0",
-    "@x402/core": "^1.0.0",
+    "@tetherto/wdk": "^1.0.0-beta.6",
+    "@tetherto/wdk-wallet-evm": "^1.0.0-beta.10",
+    "@tetherto/wdk-protocol-swap-velora-evm": "^1.0.0-beta.4",
+    "@tetherto/wdk-protocol-bridge-usdt0-evm": "^1.0.0-beta.3",
+    "@tetherto/wdk-protocol-lending-aave-evm": "^1.0.0-beta.3",
     "express": "^4.18.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0"

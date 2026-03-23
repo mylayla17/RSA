@@ -1,6 +1,13 @@
 /**
  * WDK Service Server
- * Express API that bridges Next.js frontend with real WDK blockchain operations
+ * Express API that bridges Next.js frontend with real Tether WDK operations
+ * 
+ * Real APIs from:
+ * - @tetherto/wdk (core)
+ * - @tetherto/wdk-wallet-evm (wallet)
+ * - @tetherto/wdk-protocol-swap-velora-evm (swaps)
+ * - @tetherto/wdk-protocol-bridge-usdt0-evm (bridge)
+ * - @tetherto/wdk-protocol-lending-aave-evm (lending)
  */
 
 import express, { Request, Response } from "express";
@@ -10,13 +17,10 @@ import {
   initializeWallet,
   getBalance,
   executeSwap,
-  bridgeUsdt,
-  makeX402Payment,
+  quoteSwap,
+  bridgeUsdt0,
   lendOrBorrow,
-  cleanup,
-  WalletConfig,
-  SwapRequest,
-  BridgeRequest,
+  cleanup
 } from "./wdk.js";
 
 dotenv.config();
@@ -33,179 +37,218 @@ app.get("/health", (req: Request, res: Response) => {
   res.json({
     status: "ok",
     service: "WDK Blockchain Service",
-    timestamp: new Date().toISOString(),
+    version: "1.0.0",
+    timestamp: new Date().toISOString()
   });
 });
 
 /**
  * POST /wallet/init
  * Initialize wallet with seed phrase
- * Body: { seedPhrase: string, chainId: string, rpcUrl?: string }
+ * 
+ * Request Body:
+ * {
+ *   seedPhrase: string (12 or 24 words),
+ *   chain: string ("ethereum" | "arbitrum" | "optimism" | "polygon" | "plasma" | "stable"),
+ *   accountIndex?: number (default: 0)
+ * }
+ * 
+ * Returns: { success: boolean, address?: string, chain?: string, error?: string }
  */
 app.post("/wallet/init", async (req: Request, res: Response) => {
   try {
-    const { seedPhrase, chainId, rpcUrl } = req.body;
+    const { seedPhrase, chain, accountIndex } = req.body;
 
-    if (!seedPhrase || !chainId) {
+    if (!seedPhrase || !chain) {
       return res.status(400).json({
-        error: "Missing required fields: seedPhrase, chainId",
+        success: false,
+        error: "Missing required fields: seedPhrase, chain"
       });
     }
 
     // SECURITY: Never log seed phrases
-    console.log(`[API] Initializing wallet on chain ${chainId}`);
+    console.log(`[WDK] Initializing wallet on chain: ${chain}`);
 
     const result = await initializeWallet({
       seedPhrase,
-      chainId,
-      rpcUrl: rpcUrl || undefined,
-    } as WalletConfig);
+      chain,
+      accountIndex: accountIndex || 0
+    });
 
     res.json(result);
   } catch (error: any) {
-    console.error("[API] Wallet init error:", error);
+    console.error("[WDK] Wallet init error:", error.message);
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: error.message
     });
   }
 });
 
 /**
  * GET /balance
- * Get current wallet balance
- * Query: { token?: string }
+ * Get wallet balance
+ * 
+ * Returns: { success: boolean, address?: string, message?: string, error?: string }
  */
 app.get("/balance", async (req: Request, res: Response) => {
   try {
-    const token = req.query.token as string | undefined;
-    const result = await getBalance(token);
+    const result = await getBalance();
     res.json(result);
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /swap/quote
+ * Get swap quote without executing
+ * 
+ * Request Body:
+ * {
+ *   fromToken: string (token address),
+ *   toToken: string (token address),
+ *   amount: string (in microunits, e.g., "1000000" for 1 USDT)
+ * }
+ * 
+ * Returns: { success: boolean, fee?: string, amountIn?: string, amountOut?: string, error?: string }
+ */
+app.post("/swap/quote", async (req: Request, res: Response) => {
+  try {
+    const { fromToken, toToken, amount } = req.body;
+
+    if (!fromToken || !toToken || !amount) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required fields: fromToken, toToken, amount"
+      });
+    }
+
+    console.log(`[WDK] Quote request: ${amount} ${fromToken} → ${toToken}`);
+
+    const result = await quoteSwap({
+      fromToken,
+      toToken,
+      amount: BigInt(amount)
+    });
+
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message
     });
   }
 });
 
 /**
  * POST /swap
- * Execute DEX swap via Velora
- * Body: {
- *   fromToken: string,
- *   toToken: string,
- *   amount: string (in microunits),
- *   slippageTolerance?: number,
- *   maxGasPrice?: string
+ * Execute real DEX swap via Velora
+ * https://github.com/tetherto/wdk-protocol-swap-velora-evm
+ * 
+ * Request Body:
+ * {
+ *   fromToken: string (token address),
+ *   toToken: string (token address),
+ *   amount: string (in microunits, e.g., "1000000" for 1 USDT),
+ *   maxGasPrice?: string (optional)
  * }
+ * 
+ * Returns: { success: boolean, transactionHash?: string, amountIn?: string, amountOut?: string, fee?: string, error?: string }
  */
 app.post("/swap", async (req: Request, res: Response) => {
   try {
-    const { fromToken, toToken, amount, slippageTolerance, maxGasPrice } =
-      req.body;
+    const { fromToken, toToken, amount, maxGasPrice } = req.body;
 
     if (!fromToken || !toToken || !amount) {
       return res.status(400).json({
-        error: "Missing required fields: fromToken, toToken, amount",
+        success: false,
+        error: "Missing required fields: fromToken, toToken, amount"
       });
     }
 
-    console.log(`[API] Swap request: ${amount} ${fromToken} → ${toToken}`);
+    console.log(`[WDK] Swap: ${amount} ${fromToken} → ${toToken}`);
 
     const result = await executeSwap({
       fromToken,
       toToken,
-      amount,
-      slippageTolerance,
-      maxGasPrice,
-    } as SwapRequest);
+      amount: BigInt(amount),
+      maxGasPrice: maxGasPrice ? BigInt(maxGasPrice) : undefined
+    });
 
     res.json(result);
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: error.message
     });
   }
 });
 
 /**
  * POST /bridge
- * Bridge USDT0 cross-chain
- * Body: {
- *   token: string,
- *   amount: string,
+ * Bridge USDT0 across chains
+ * https://github.com/tetherto/wdk-protocol-bridge-usdt0-evm
+ * 
+ * Request Body:
+ * {
+ *   token: string (USDT token address),
+ *   amount: string (in microunits),
  *   fromChain: string,
  *   toChain: string,
- *   recipient: string,
- *   maxFee?: string
+ *   recipient: string (destination address)
  * }
+ * 
+ * Returns: { success: boolean, transactionHash?: string, amount?: string, fee?: string, error?: string }
  */
 app.post("/bridge", async (req: Request, res: Response) => {
   try {
-    const { token, amount, fromChain, toChain, recipient, maxFee } = req.body;
+    const { token, amount, fromChain, toChain, recipient } = req.body;
 
     if (!token || !amount || !toChain || !recipient) {
       return res.status(400).json({
-        error:
-          "Missing required fields: token, amount, toChain, recipient",
+        success: false,
+        error: "Missing required fields: token, amount, toChain, recipient"
       });
     }
 
-    console.log(
-      `[API] Bridge request: ${amount} ${token} to ${toChain}`
-    );
+    console.log(`[WDK] Bridge: ${amount} from ${fromChain || 'current'} to ${toChain}`);
 
-    const result = await bridgeUsdt({
+    const result = await bridgeUsdt0({
       token,
-      amount,
-      fromChain,
+      amount: BigInt(amount),
+      fromChain: fromChain || 'ethereum',
       toChain,
-      recipient,
-      maxFee,
-    } as BridgeRequest);
-
-    res.json(result);
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
+      recipient
     });
-  }
-});
 
-/**
- * POST /payment/x402
- * Make x402 payment for protected resources
- * Body: { resourceUrl: string }
- */
-app.post("/payment/x402", async (req: Request, res: Response) => {
-  try {
-    const { resourceUrl } = req.body;
-
-    if (!resourceUrl) {
-      return res.status(400).json({
-        error: "Missing required field: resourceUrl",
-      });
-    }
-
-    console.log(`[API] x402 payment request for ${resourceUrl}`);
-
-    const result = await makeX402Payment(resourceUrl);
     res.json(result);
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: error.message
     });
   }
 });
 
 /**
  * POST /lending/:action
- * Lending operations: deposit, borrow, withdraw, repay
- * Body: { token: string, amount: string }
+ * Aave V3 lending operations
+ * https://github.com/tetherto/wdk-protocol-lending-aave-evm
+ * 
+ * URL Parameters:
+ *   action: "deposit" | "borrow" | "withdraw" | "repay"
+ * 
+ * Request Body:
+ * {
+ *   token: string (token address),
+ *   amount: string (in microunits)
+ * }
+ * 
+ * Returns: { success: boolean, transactionHash?: string, action?: string, amount?: string, fee?: string, error?: string }
  */
 app.post("/lending/:action", async (req: Request, res: Response) => {
   try {
@@ -218,86 +261,101 @@ app.post("/lending/:action", async (req: Request, res: Response) => {
 
     if (!token || !amount) {
       return res.status(400).json({
-        error: "Missing required fields: token, amount",
+        success: false,
+        error: "Missing required fields: token, amount"
       });
     }
 
     if (!["deposit", "borrow", "withdraw", "repay"].includes(action)) {
       return res.status(400).json({
-        error: "Invalid action. Must be deposit, borrow, withdraw, or repay",
+        success: false,
+        error: "Invalid action. Must be: deposit, borrow, withdraw, repay"
       });
     }
 
-    console.log(`[API] Lending ${action}: ${amount} ${token}`);
+    console.log(`[WDK] Lending ${action}: ${amount} ${token}`);
 
-    const result = await lendOrBorrow(action, token, amount);
+    const result = await lendOrBorrow(
+      action,
+      token,
+      BigInt(amount)
+    );
+
     res.json(result);
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: error.message
     });
   }
 });
 
 /**
  * POST /cleanup
- * Wipe wallet keys from memory (security)
+ * Wipe wallet keys from memory (security!)
+ * 
+ * Returns: { success: boolean, message?: string, error?: string }
  */
 app.post("/cleanup", async (req: Request, res: Response) => {
   try {
-    await cleanup();
-    res.json({
-      success: true,
-      message: "Wallet cleaned and keys wiped from memory",
-    });
+    const result = cleanup();
+    res.json(result);
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: error.message
     });
   }
 });
 
-// Graceful shutdown
-process.on("SIGTERM", async () => {
-  console.log("[Server] SIGTERM received, cleaning up...");
-  await cleanup();
+/**
+ * Graceful shutdown - cleanup on termination
+ */
+process.on("SIGTERM", () => {
+  console.log("[WDK] SIGTERM received, cleaning up...");
+  cleanup();
   process.exit(0);
 });
 
-process.on("SIGINT", async () => {
-  console.log("[Server] SIGINT received, cleaning up...");
-  await cleanup();
+process.on("SIGINT", () => {
+  console.log("[WDK] SIGINT received, cleaning up...");
+  cleanup();
   process.exit(0);
 });
 
-// Start server
+/**
+ * Start server
+ */
 app.listen(PORT, () => {
   console.log(`
-╔════════════════════════════════════════════╗
-║  WDK Blockchain Service                   ║
-║  Real Tether WDK Integration               ║
-╚════════════════════════════════════════════╝
+╔════════════════════════════════════════════════════════╗
+║        WDK Blockchain Service (Real Tether WDK)       ║
+╚════════════════════════════════════════════════════════╝
 
-📍 Host: http://localhost:${PORT}
-🔗 Health: http://localhost:${PORT}/health
+📍 Service: http://localhost:${PORT}
+✅ Health: http://localhost:${PORT}/health
 
-Available Endpoints:
-  POST /wallet/init          - Initialize wallet
-  GET  /balance              - Get wallet balance
-  POST /swap                 - Execute DEX swap
-  POST /bridge               - Bridge USDT0 cross-chain
-  POST /payment/x402         - Make x402 payment
-  POST /lending/:action      - Lend/borrow via Aave V3
-  POST /cleanup              - Wipe wallet keys
+Endpoints:
+  ▪ POST /wallet/init         Initialize wallet
+  ▪ GET  /balance             Get balance
+  ▪ POST /swap/quote          Quote swap (no execution)
+  ▪ POST /swap                Execute swap (Velora)
+  ▪ POST /bridge              Bridge USDT0 cross-chain
+  ▪ POST /lending/:action     Lend/borrow (Aave)
+  ▪ POST /cleanup             Cleanup & wipe keys
 
-Environment Variables Required:
-  - SEED_PHRASE or prompt on initialization
-  - WDK_SERVICE_PORT (default: 3001)
-  - ETH_RPC, PLASMA_RPC, STABLE_RPC (optional)
-  - BRIDGE_MAX_FEE (optional)
+Real WDK Modules:
+  • @tetherto/wdk (core)
+  • @tetherto/wdk-wallet-evm (wallet)
+  • @tetherto/wdk-protocol-swap-velora-evm (Velora DEX)
+  • @tetherto/wdk-protocol-bridge-usdt0-evm (Bridge)
+  • @tetherto/wdk-protocol-lending-aave-evm (Aave V3)
 
+Documentation:
+  https://docs.wallet.tether.io/
+
+`);
+});
 ⚠️  SECURITY: Never commit seed phrases to version control
 🔐 All write operations require explicit confirmation
   `);

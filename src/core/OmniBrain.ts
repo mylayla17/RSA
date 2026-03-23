@@ -197,45 +197,35 @@ export class OmniBrain {
   }
 
   /**
-   * Generate fallback market data when API fails
+   * Generate fallback market data with realistic imbalances to trigger swaps
+   * 
+   * IMPORTANT: Creates actual pool imbalances so swaps get triggered!
+   * Previous version had balanced markets (50/50) → no swaps possible
+   * New version: Varies from 40/60 to 60/40 → swaps triggered based on persona
    */
   private generateFallbackMarketData(): MarketSnapshot {
     const now = new Date().toISOString();
     
     // Use realistic gold price as XAUt base
     const baseXautPrice = 2650.0;
-    const xautPrice = baseXautPrice + (Math.random() - 0.5) * 50;
+    const xautPrice = baseXautPrice + (Math.random() - 0.5) * 100;  // ±50 variation
     
-    // Reserves matching Treasury Matrix task data
-    const usdtReserve = 5000 + (Math.random() - 0.5) * 1000000;  // 1,109,197,067,160,420,100.00 USDT
-    const xautReserve = 2000 + (Math.random() - 0.5) * 1000;  // 4,721,595,641,686.785 XAUT oz
+    // CREATE REALISTIC POOL IMBALANCES (40/60 to 60/40)
+    // This is KEY: Previous version had 50/50 always -> no swaps
+    // Total pool value in USD equivalent
+    const totalPoolValue = 10000000;  // $10M pool
     
-    const usdt24hChange = 0.024;  // +2.4% matching UI
-    const xaut24hChange = (Math.random() - 0.5) * 2;  // Realistic gold volatility
+    // Random imbalance ratio: 35-65% range (not 50/50!)
+    const usdtRatio = 0.35 + Math.random() * 0.3;  // 35% to 65% USDT
+    const xautRatio = 1 - usdtRatio;                // Remaining is XAUT
     
-    const volatilityIndex = 0.1 + Math.random() * 0.4;
-    const volume24h = 10000000 + Math.random() * 5000000;
-    const spreadBps = 1 + Math.floor(Math.random() * 10);
-    const fundingRate = (Math.random() - 0.5) * 0.01;
-    const liquidityDepth = 8000000 + Math.random() * 2000000;
-
-    this.lastMarketSnapshot = {
-      timestamp: now,
-      usdtPrice: 1.0,
-      xautPrice,
-      usdtReserve,
-      xautReserve,
-      usdt24hChange,
-      xaut24hChange,
-      volatilityIndex,
-      volume24h,
-      spreadBps,
-      fundingRate,
-      liquidityDepth
-    };
-
-    return this.lastMarketSnapshot;
-  }
+    // Calculate reserves to match this ratio
+    const usdtValue = totalPoolValue * usdtRatio;
+    const xautValue = totalPoolValue * xautRatio;
+    const usdtReserve = Math.floor(usdtValue);
+    const xautReserve = Math.floor(xautValue / xautPrice);  // Convert to ounces
+    
+    // Calculate actual imbalance score (0 = balanced, >0.05 = triggers most personas)\n    const poolRatio = usdtReserve / (usdtReserve + xautReserve * xautPrice);\n    const imbalanceScore = Math.abs(poolRatio - 0.5);\n    \n    // Market movements\n    const usdt24hChange = 0.024;  // +2.4% matching UI\n    const xaut24hChange = (Math.random() - 0.5) * 3;  // Realistic gold volatility (±1.5%)\n    \n    // Volatility should be moderate to keep confidence up\n    const volatilityIndex = 0.15 + Math.random() * 0.35;  // 15-50% (was 10-50%)\n    const volume24h = 10000000 + Math.random() * 5000000;\n    const spreadBps = 2 + Math.floor(Math.random() * 8);  // 2-10 bps\n    const fundingRate = (Math.random() - 0.5) * 0.01;\n    const liquidityDepth = 8000000 + Math.random() * 2000000;\n\n    // Debug log\n    console.log(`\\x1b[36m   Market Snapshot Generated:`);\n    console.log(`     USDT Ratio: ${(usdtRatio * 100).toFixed(1)}%`);\n    console.log(`     XAUT Ratio: ${(xautRatio * 100).toFixed(1)}%`);\n    console.log(`     Imbalance Score: ${imbalanceScore.toFixed(4)} (triggers swaps if > 0.05)\\x1b[0m\\n`);\n\n    this.lastMarketSnapshot = {\n      timestamp: now,\n      usdtPrice: 1.0,\n      xautPrice,\n      usdtReserve,\n      xautReserve,\n      usdt24hChange,\n      xaut24hChange,\n      volatilityIndex,\n      volume24h,\n      spreadBps,\n      fundingRate,\n      liquidityDepth\n    };\n\n    return this.lastMarketSnapshot;\n  }
 
   /**
    * Invoke OpenClaw LLM inference for market analysis
